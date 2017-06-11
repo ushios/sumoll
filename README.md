@@ -1,2 +1,1 @@
-# oshidashi
-Lightwight sumologic log sender
+# sumoll
