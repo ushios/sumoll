@@ -12,5 +12,3 @@ RUN apk add --no-cache --virtual .goget \
 	git && \
 	go get -v ./... && \
 	apk del .goget
-
-RUN go build ./...
