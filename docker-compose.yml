@@ -1,0 +1,10 @@
+version: '2'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/go/src/github.com/ushios/sumoll
+    environment:
+      - SUMOLL_TEST_HTTP_SOURCE_URL=${SUMOLL_TEST_HTTP_SOURCE_URL}
