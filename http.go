@@ -14,16 +14,35 @@ type (
 		url       *url.URL
 		client    *http.Client
 		UserAgent string
+		headers   *http.Header
 	}
 )
 
 // NewHTTPSourceClient create HTTPSourceClient object
-func NewHTTPSourceClient(url *url.URL) *HTTPSourceClient {
+func NewHTTPSourceClient(url *url.URL, category, hostname, sourceName *string) *HTTPSourceClient {
 	return &HTTPSourceClient{
 		url:       url,
 		client:    &http.Client{},
 		UserAgent: UserAgent(),
+		headers:   getHeaders(category, hostname, sourceName),
 	}
+}
+
+func getHeaders(category *string, hostname *string, sourceName *string) *http.Header {
+	if category == nil && hostname == nil && sourceName == nil {
+		return nil
+	}
+	headers := http.Header{}
+	if category != nil {
+		headers.Add("X-Sumo-Category", *category)
+	}
+	if category != nil {
+		headers.Add("X-Sumo-Host", *hostname)
+	}
+	if category != nil {
+		headers.Add("X-Sumo-Name", *sourceName)
+	}
+	return &headers
 }
 
 // Send object to sumologic
@@ -34,6 +53,10 @@ func (h *HTTPSourceClient) Send(body io.Reader) error {
 	req, err := h.newRequest(ctx, http.MethodPost, body)
 	if err != nil {
 		return err
+	}
+
+	if h.headers != nil {
+		req.Header = *h.headers
 	}
 
 	if _, err := h.client.Do(req); err != nil {
