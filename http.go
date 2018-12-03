@@ -6,13 +6,19 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+	"errors"
+	"fmt"
 )
+
+type httpClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
 
 type (
 	// HTTPSourceClient send to Resource HTTP
 	HTTPSourceClient struct {
 		url       *url.URL
-		client    *http.Client
+		client    httpClient
 		UserAgent string
 		headers   *http.Header
 	}
@@ -56,14 +62,34 @@ func (h *HTTPSourceClient) Send(body io.Reader) error {
 	}
 
 	if h.headers != nil {
-		req.Header = *h.headers
+		mergeHeaders(&req.Header, h.headers)
 	}
 
-	if _, err := h.client.Do(req); err != nil {
+	res, err := h.client.Do(req)
+	if err != nil {
 		return err
 	}
 
+	if !validResponseStatus(res.StatusCode) {
+		return errors.New(fmt.Sprintf("Unexpected response code from Sumologic: %v", res.StatusCode))
+	}
+
 	return nil
+}
+
+func validResponseStatus(status int) bool {
+	return status >= http.StatusOK && status < http.StatusMultipleChoices
+}
+
+func mergeHeaders(merged, input *http.Header)  {
+	if input == nil {
+		return
+	}
+	for k, v := range *input {
+		if len(v) > 0 {
+			merged.Add(k, v[0])
+		}
+	}
 }
 
 func (h *HTTPSourceClient) newRequest(ctx context.Context, method string, body io.Reader) (*http.Request, error) {

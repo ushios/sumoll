@@ -14,9 +14,20 @@ $ go get github.com/ushios/sumoll
 
 # Usage
 
-### Send string to http source collection
+## Send string to http source collection
 
 ```go
 client := NewHTTPSourceClient("http://collectors.au.sumologic.com/receiver/v1/http/...")
 client.Send(strings.NewReader("your message here."))
+```
+
+# Developing
+
+## Integration test
+
+There's a test actually injecting data to sumologic. In order that to run, you need to set the env variable 
+`SUMOLL_TEST_HTTP_SOURCE_URL` like this:
+
+```bash
+SUMOLL_TEST_HTTP_SOURCE_URL="https://collectors.eu.sumologic.com/receiver/v1/http/randomCollectorURL" go test --count=1 . -v
 ```
