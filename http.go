@@ -2,12 +2,12 @@ package sumoll
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"time"
-	"errors"
-	"fmt"
 )
 
 type httpClient interface {
@@ -22,33 +22,57 @@ type (
 		UserAgent string
 		headers   *http.Header
 	}
+
+	// HTTPSourceClientOptFunc set some values to client
+	HTTPSourceClientOptFunc func(*HTTPSourceClient) error
 )
 
-// NewHTTPSourceClient create HTTPSourceClient object
-func NewHTTPSourceClient(url *url.URL, category, hostname, sourceName *string) *HTTPSourceClient {
-	return &HTTPSourceClient{
-		url:       url,
-		client:    &http.Client{},
-		UserAgent: UserAgent(),
-		headers:   getHeaders(category, hostname, sourceName),
+// SetXSumoCategoryHeader set X-Sumo-Category's value to header
+func SetXSumoCategoryHeader(category string) HTTPSourceClientOptFunc {
+	return func(h *HTTPSourceClient) error {
+		if category != "" {
+			h.headers.Add("X-Sumo-Category", category)
+		}
+		return nil
 	}
 }
 
-func getHeaders(category *string, hostname *string, sourceName *string) *http.Header {
-	if category == nil && hostname == nil && sourceName == nil {
+// SetXSumoNameHeader set X-Sumo-Name's value to header
+func SetXSumoNameHeader(name string) HTTPSourceClientOptFunc {
+	return func(h *HTTPSourceClient) error {
+		if name != "" {
+			h.headers.Add("X-Sumo-Name", name)
+		}
 		return nil
 	}
-	headers := http.Header{}
-	if category != nil {
-		headers.Add("X-Sumo-Category", *category)
+}
+
+// SetXSumoHostHeader set X-Sumo-Host's value to header
+func SetXSumoHostHeader(host string) HTTPSourceClientOptFunc {
+	return func(h *HTTPSourceClient) error {
+		if host != "" {
+			h.headers.Add("X-Sumo-Host", host)
+		}
+		return nil
 	}
-	if category != nil {
-		headers.Add("X-Sumo-Host", *hostname)
+}
+
+// NewHTTPSourceClient create HTTPSourceClient object
+func NewHTTPSourceClient(url *url.URL, opts ...HTTPSourceClientOptFunc) (*HTTPSourceClient, error) {
+	c := &HTTPSourceClient{
+		url:       url,
+		client:    &http.Client{},
+		UserAgent: UserAgent(),
+		headers:   &http.Header{},
 	}
-	if category != nil {
-		headers.Add("X-Sumo-Name", *sourceName)
+
+	for _, opts := range opts {
+		if err := opts(c); err != nil {
+			return nil, err
+		}
 	}
-	return &headers
+
+	return c, nil
 }
 
 // Send object to sumologic
@@ -81,7 +105,7 @@ func validResponseStatus(status int) bool {
 	return status >= http.StatusOK && status < http.StatusMultipleChoices
 }
 
-func mergeHeaders(merged, input *http.Header)  {
+func mergeHeaders(merged, input *http.Header) {
 	if input == nil {
 		return
 	}

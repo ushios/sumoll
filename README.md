@@ -3,7 +3,8 @@ Small sumologic payload sender client
 
 [![CircleCI](https://circleci.com/gh/ushios/sumoll.svg?style=shield&circle-token=1fd034d3a678ace2e03a3f496736c9e8b0093935)](https://circleci.com/gh/ushios/sumoll)
 [![Build Status](https://travis-ci.org/ushios/sumoll.svg?branch=master)](https://travis-ci.org/ushios/sumoll)
-[![Coverage Status](https://coveralls.io/repos/github/ushios/sumoll/badge.svg?branch=feature%2Fci)](https://coveralls.io/github/ushios/sumoll?branch=feature%2Fci)[![Go Report Card](https://goreportcard.com/badge/github.com/ushios/sumoll)](https://goreportcard.com/report/github.com/ushios/sumoll)
+[![Coverage Status](https://coveralls.io/repos/github/ushios/sumoll/badge.svg?branch=feature%2Fci)](https://coveralls.io/github/ushios/sumoll?branch=feature%2Fci)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ushios/sumoll)](https://goreportcard.com/report/github.com/ushios/sumoll)
 [![GoDoc](https://godoc.org/github.com/ushios/sumoll?status.svg)](https://godoc.org/github.com/ushios/sumoll)
 
 # Installation

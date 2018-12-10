@@ -1,13 +1,13 @@
 package sumoll
 
 import (
+	"io"
+	"log"
+	"net/http"
 	"net/url"
 	"os"
 	"strings"
 	"testing"
-	"net/http"
-	"log"
-	"io"
 )
 
 const os_env_http_source = "SUMOLL_TEST_HTTP_SOURCE_URL"
@@ -33,7 +33,10 @@ func TestHTTPSourceClientSendIntegration(t *testing.T) {
 		if err != nil {
 			t.Fatalf("url.Parse(%s) got error: %s", httpSourceURL, err)
 		}
-		c := NewHTTPSourceClient(u, nil, nil, nil)
+		c, err := NewHTTPSourceClient(u)
+		if err != nil {
+			t.Fatalf("NewHTTPSourceClient got error")
+		}
 
 		err = c.Send(strings.NewReader(row.body))
 		if err != nil {
@@ -74,16 +77,24 @@ func (hc httpClientMock) Do(req *http.Request) (*http.Response, error) {
 
 func TestHTTPSourceClientSendUnit(t *testing.T) {
 	table := []struct {
-		category, hostname, sourcename *string
+		category, hostname, sourcename string
 	}{
-		{nil, nil, nil},
+		{"", "", ""},
 	}
 
 	for _, values := range table {
 		localUrl, _ := url.Parse(urlForUnitTests)
-		c := NewHTTPSourceClient(localUrl, values.category, values.hostname, values.sourcename)
+		c, err := NewHTTPSourceClient(localUrl,
+			SetXSumoCategoryHeader(values.category),
+			SetXSumoHostHeader(values.hostname),
+			SetXSumoNameHeader(values.sourcename),
+		)
+		if err != nil {
+			t.Fatalf("NewHTTPSourceClient got error: %s", err)
+		}
+
 		c.client = &httpClientMock{}
-		err := c.Send(strings.NewReader("hogehoge"))
+		err = c.Send(strings.NewReader("hogehoge"))
 		if err != nil {
 			t.Error("Error response when sending payload to", localUrl,
 				"with", values.category, values.hostname, values.sourcename,
