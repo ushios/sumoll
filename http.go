@@ -40,7 +40,7 @@ func SetXSumoCategoryHeader(category string) HTTPSourceClientOptFunc {
 // SetXSumoNameHeader set X-Sumo-Name's value to header
 func SetXSumoNameHeader(name string) HTTPSourceClientOptFunc {
 	return func(h *HTTPSourceClient) error {
-		if name == "" {
+		if name != "" {
 			h.headers.Add("X-Sumo-Name", name)
 		}
 		return nil
@@ -50,7 +50,7 @@ func SetXSumoNameHeader(name string) HTTPSourceClientOptFunc {
 // SetXSumoHostHeader set X-Sumo-Host's value to header
 func SetXSumoHostHeader(host string) HTTPSourceClientOptFunc {
 	return func(h *HTTPSourceClient) error {
-		if host == "" {
+		if host != "" {
 			h.headers.Add("X-Sumo-Host", host)
 		}
 		return nil
