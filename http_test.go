@@ -46,6 +46,7 @@ func TestHTTPSourceClientSendIntegration(t *testing.T) {
 }
 
 type httpClientMock struct {
+	checkCategoryValue, checkHostnameValue, checkSourcenameValue string
 }
 
 type nopCloser struct {
@@ -64,7 +65,16 @@ func (hc httpClientMock) Do(req *http.Request) (*http.Response, error) {
 	switch operation {
 	case "POST":
 		expectedURL, _ := url.Parse(urlForUnitTests)
-		if req.URL != nil && *req.URL == *expectedURL {
+		if req.URL == nil || *req.URL != *expectedURL {
+			log.Println("Request against mock did not match the expected URL", expectedURL)
+		} else if hc.checkCategoryValue != "" && !hasHeaderWithValue(req, "X-Sumo-Category", hc.checkCategoryValue) {
+			log.Println("Request against mock did not have the expected category value", hc.checkCategoryValue)
+		} else if hc.checkHostnameValue != "" && !hasHeaderWithValue(req, "X-Sumo-Host", hc.checkHostnameValue) {
+			log.Println("Request against mock did not have the expected hostname value", hc.checkHostnameValue)
+		} else if hc.checkSourcenameValue != "" && !hasHeaderWithValue(req, "X-Sumo-Name", hc.checkSourcenameValue) {
+			log.Println("Request against mock did not have the expected sourcename value", hc.checkSourcenameValue)
+		} else {
+			log.Println("All mock tests were successful")
 			responseToSend = http.StatusOK
 		}
 	}
@@ -74,12 +84,19 @@ func (hc httpClientMock) Do(req *http.Request) (*http.Response, error) {
 		Status:     http.StatusText(responseToSend),
 	}, nil
 }
+func hasHeaderWithValue(request *http.Request, header string, expectedValue string) bool {
+	return request.Header.Get(header) == expectedValue
+}
 
 func TestHTTPSourceClientSendUnit(t *testing.T) {
 	table := []struct {
 		category, hostname, sourcename string
 	}{
 		{"", "", ""},
+		{"testCategory", "", ""},
+		{"", "testHostname", ""},
+		{"", "", "testSourcename"},
+		{"testCategory", "testHostname", "testSourcename"},
 	}
 
 	for _, values := range table {
@@ -93,7 +110,11 @@ func TestHTTPSourceClientSendUnit(t *testing.T) {
 			t.Fatalf("NewHTTPSourceClient got error: %s", err)
 		}
 
-		c.client = &httpClientMock{}
+		c.client = &httpClientMock{
+			checkCategoryValue:   values.category,
+			checkHostnameValue:   values.hostname,
+			checkSourcenameValue: values.sourcename,
+		}
 		err = c.Send(strings.NewReader("hogehoge"))
 		if err != nil {
 			t.Error("Error response when sending payload to", localUrl,
